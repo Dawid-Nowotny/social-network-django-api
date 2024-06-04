@@ -2,10 +2,9 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 
-from .serializers import UserSerializer, AvatarSerializer
+from .serializers import UserSerializer, AvatarSerializer, ProfileInfoSerializer
 from .models import Avatar
 
 class RegisterView(generics.CreateAPIView):
@@ -22,7 +21,12 @@ class UserUpdateView(generics.UpdateAPIView):
 class AvatarView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AvatarSerializer
-    
+
+class UserDetailView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = ProfileInfoSerializer
+    lookup_field = 'username'
+
 class CurrentAvatarView(generics.RetrieveAPIView):
     def get_object(self):
         username = self.kwargs.get('username')

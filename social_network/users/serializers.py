@@ -45,6 +45,11 @@ class UserSerializer(serializers.ModelSerializer):
 
         return super().update(instance, validated_data)
 
+class ProfileInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'is_staff', 'is_active', 'date_joined')
+
 class AvatarSerializer(serializers.ModelSerializer):
     class Meta:
         model = Avatar
