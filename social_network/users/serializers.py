@@ -54,3 +54,10 @@ class AvatarSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         Avatar.objects.filter(user=user, current=True).update(current=False)
         return Avatar.objects.create(user=user, **validated_data)
+    
+class CurrentAvatarSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Avatar
+        fields = ['image']
