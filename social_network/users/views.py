@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.exceptions import NotFound, PermissionDenied
 
 from django.contrib.auth.models import User
 from django.http import HttpResponse
@@ -28,6 +29,11 @@ class AvatarUpdateView(generics.UpdateAPIView):
 
     def put(self, request, *args, **kwargs):
         user = request.user
+        username = self.kwargs.get('username')
+
+        if user.username != username:
+            raise PermissionDenied("You do not have permission to update avatars for this user.")
+
         avatars = Avatar.objects.filter(user=user)
         avatars.update(current=False)
         return Response({"detail": "All avatars set to current=False"}, status=status.HTTP_200_OK)
@@ -43,13 +49,13 @@ class CurrentAvatarView(generics.RetrieveAPIView):
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
-            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFound({'error': 'User not found'})
 
         avatar = Avatar.objects.filter(user=user, current=True).first()
         if avatar:
             return avatar
         else:
-            return Response({'error': 'User has no current avatar'}, status=status.HTTP_404_NOT_FOUND)
+            raise NotFound({'error': 'User has no current avatar'})
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
