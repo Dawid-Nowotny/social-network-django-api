@@ -22,6 +22,16 @@ class AvatarView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = AvatarSerializer
 
+class AvatarUpdateView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = None
+
+    def put(self, request, *args, **kwargs):
+        user = request.user
+        avatars = Avatar.objects.filter(user=user)
+        avatars.update(current=False)
+        return Response({"detail": "All avatars set to current=False"}, status=status.HTTP_200_OK)
+
 class UserDetailView(generics.RetrieveAPIView):
     queryset = User.objects.all()
     serializer_class = ProfileInfoSerializer
