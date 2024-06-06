@@ -2,8 +2,11 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.exceptions import NotFound, PermissionDenied
 
-from django.contrib.auth.models import User
 from django.http import HttpResponse
+from django.contrib.auth.models import User
+from django.core.files.storage import default_storage
+
+import zipfile
 
 from .serializers import UserSerializer, AvatarSerializer, ProfileInfoSerializer
 from .models import Avatar
@@ -64,3 +67,41 @@ class CurrentAvatarView(generics.RetrieveAPIView):
         elif instance and instance.image:
             image_data = instance.image.read()
             return HttpResponse(image_data, content_type='image/jpeg')
+        
+class UserAvatarsZipView(generics.GenericAPIView):
+    lookup_field = 'username'
+
+    def get(self, request, *args, **kwargs):
+        username = kwargs.get('username')
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        avatars = Avatar.objects.filter(user=user)
+
+        if not avatars:
+            return Response({"error": "User has no avatars."}, status=status.HTTP_404_NOT_FOUND)
+
+        zip_filename = "avatars.zip"
+        zip_file = zipfile.ZipFile(zip_filename, mode='w')
+
+        try:
+            current_avatar = avatars.filter(current=True).first()
+            for avatar in avatars:
+                avatar_file = default_storage.open(avatar.image.name, 'rb')
+                if avatar == current_avatar:
+                    file_name = f"current_{avatar.id}.png"
+                else:
+                    file_name = f"{avatar.id}.png"
+                zip_file.writestr(file_name, avatar_file.read())
+                avatar_file.close()
+
+            zip_file.close()
+
+            zip_data = open(zip_filename, 'rb').read()
+            response = HttpResponse(zip_data, content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{zip_filename}"'
+            return response
+        finally:
+            default_storage.delete(zip_filename)
