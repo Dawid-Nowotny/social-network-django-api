@@ -24,3 +24,11 @@ class PostSerializer(serializers.ModelSerializer):
         for image_data in images_data:
             PostImage.objects.create(post=post, image=image_data)
         return post
+
+class PostDetailSerializer(PostSerializer):
+    author = serializers.StringRelatedField()
+    creation_date = serializers.DateField()
+    likes = serializers.StringRelatedField(many=True, read_only=True)
+
+    class Meta(PostSerializer.Meta):
+        fields = PostSerializer.Meta.fields + ['author', 'creation_date', 'likes']
