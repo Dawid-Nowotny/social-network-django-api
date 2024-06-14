@@ -42,6 +42,9 @@ urlpatterns = [
     #user
     path('api/user/', include('users.urls', namespace='users')),
 
+    #post 
+    path('api/post/', include('posts.urls', namespace='posts')),
+
     #token
     path('api/user/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/user/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
